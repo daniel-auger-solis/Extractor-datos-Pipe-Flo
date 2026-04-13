@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagrama de Red de Cañerías</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Syne:wght@400;600;800&display=swap');
+
+    :root {
+      --bg: #0a0e14;
+      --surface: #111720;
+      --surface2: #1a2230;
+      --border: #1e2d40;
+      --accent: #00c8ff;
+      --text: #c8d8e8;
+      --text-dim: #5a7a96;
+      --pc: #2a5a8a;
+      --ph: #00c8ff;
+      --pl: #4a7a9a;
+      --pump: #ff6b2b;
+      --valve: #a855f7;
+      --fixeddp: #f59e0b;
+      --boundary: #4eff9e;
+      --tank: #00c8ff;
+      --node: #2a9d8f;
+      --ec: #ff6b2b;
+    }
+
+    body.light {
+      --bg: #f0f4f8;
+      --surface: #e2e8f0;
+      --surface2: #d1dce8;
+      --border: #a0b8cc;
+      --accent: #0078a8;
+      --text: #1a2a3a;
+      --text-dim: #4a6a86;
+      --pc: #2a6090;
+      --ph: #0078a8;
+      --pl: #3a6a8a;
+      --pump: #c04810;
+      --valve: #7c3aed;
+      --fixeddp: #b45309;
+      --boundary: #059669;
+      --tank: #0078a8;
+      --node: #0f766e;
+      --ec: #c04810;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: background .3s, color .3s;
+    }
+
+    header {
+      padding: 7px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      transition: background .3s, border-color .3s;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent);
+      white-space: nowrap;
+      letter-spacing: .04em;
+    }
+
+    .sep {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .mtog {
+      display: flex;
+      gap: 3px;
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 3px;
+      border: 1px solid var(--border);
+    }
+
+    .mbtn {
+      padding: 4px 10px;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .mbtn.active {
+      background: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .cbg {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .cbl {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 10px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      user-select: none;
+      transition: color .2s;
+    }
+
+    .cbl:hover {
+      color: var(--text);
+    }
+
+    .cbl input {
+      display: none;
+    }
+
+    .cbb {
+      width: 13px;
+      height: 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+
+    .cbl input:checked+.cbb {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .cbl input:checked+.cbb::after {
+      content: '✓';
+      font-size: 8px;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .ibtn {
+      padding: 4px 9px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .ibtn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .zctr {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+    }
+
+    .zbtn {
+      width: 24px;
+      height: 24px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+    }
+
+    .zbtn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .zlbl {
+      font-size: 10px;
+      color: var(--text-dim);
+      min-width: 34px;
+      text-align: center;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    #cc {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      cursor: grab;
+    }
+
+    #cc:active {
+      cursor: grabbing;
+    }
+
+    #svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+    }
+
+    .legend {
+      width: 192px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 13px;
+      overflow-y: auto;
+      flex-shrink: 0;
+      transition: background .3s, border-color .3s;
+    }
+
+    .legend h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 11px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+
+    .ls {
+      width: 38px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .ln {
+      font-size: 9.5px;
+      line-height: 1.3;
+      color: var(--text);
+    }
+
+    .ld {
+      height: 1px;
+      background: var(--border);
+      margin: 9px 0;
+    }
+
+    #uoverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .77);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #uoverlay.show {
+      display: flex;
+    }
+
+    .ubox {
+      background: var(--surface);
+      border: 2px dashed var(--accent);
+      border-radius: 12px;
+      padding: 36px 44px;
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+    }
+
+    .ubox h2 {
+      font-family: 'Syne', sans-serif;
+      color: var(--accent);
+      margin-bottom: 10px;
+      font-size: 17px;
+    }
+
+    .ubox p {
+      color: var(--text-dim);
+      font-size: 10.5px;
+      margin-bottom: 18px;
+      line-height: 1.75;
+    }
+
+    .ubox input[type=file] {
+      display: none;
+    }
+
+    .upick {
+      display: inline-block;
+      padding: 9px 22px;
+      background: var(--accent);
+      color: #000;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 600;
+      margin-right: 6px;
+      transition: opacity .2s;
+    }
+
+    .upick:hover {
+      opacity: .85;
+    }
+
+    .ucan {
+      display: inline-block;
+      padding: 9px 18px;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      background: transparent;
+      transition: all .15s;
+    }
+
+    .ucan:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+
+    #ust {
+      margin-top: 12px;
+      font-size: 10px;
+      color: var(--text-dim);
+      min-height: 15px;
+    }
+
+    #ust.err {
+      color: #f87171;
+    }
+
+    #tooltip {
+      position: fixed;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 9px 11px;
+      font-size: 10.5px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+      z-index: 100;
+      max-width: 300px;
+      line-height: 1.65;
+      box-shadow: 0 4px 20px rgba(0, 200, 255, .12);
+    }
+
+    #tooltip.vis {
+      opacity: 1;
+    }
+
+    #tooltip strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 3px;
+      font-size: 11.5px;
+    }
+
+    .tr {
+      color: var(--text-dim);
+    }
+
+    .tv {
+      color: var(--text);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>⬡ RED DE CAÑERÍAS</h1>
+    <button class="ibtn" onclick="openUpload()">📂 Cargar Excel</button>
+    <div class="sep"></div>
+    <div class="mtog">
+      <button class="mbtn active" id="btn-grid" onclick="setMode('grid')">Vista Grid</button>
+      <button class="mbtn" id="btn-flat" onclick="setMode('flat')">Vista Horizontal</button>
+    </div>
+    <div class="sep"></div>
+    <div class="cbg">
+      <label class="cbl"><input type="checkbox" id="cb-nodes" checked onchange="renderDiagram()"><span
+          class="cbb"></span>Nodos</label>
+      <label class="cbl"><input type="checkbox" id="cb-pipes" onchange="renderDiagram()"><span
+          class="cbb"></span>Cañerías</label>
+      <label class="cbl"><input type="checkbox" id="cb-elev" onchange="renderDiagram()"><span
+          class="cbb"></span>Elevaciones</label>
+    </div>
+    <div class="sep"></div>
+    <button class="ibtn" id="btnTheme" onclick="toggleTheme()">☀️ Fondo claro</button>
+    <button class="ibtn" onclick="savePNG()">💾 PNG</button>
+    <div class="zctr" style="margin-left:auto">
+      <button class="zbtn" onclick="zoom(-0.2)">−</button>
+      <span class="zlbl" id="zlbl">100%</span>
+      <button class="zbtn" onclick="zoom(0.2)">+</button>
+      <button class="zbtn" onclick="resetView()">⌂</button>
+    </div>
+  </header>
+  <main>
+    <div id="cc"><svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <aside class="legend">
+      <h3>Leyenda</h3>
+      <div class="li">
+        <svg class="ls" viewBox="0 0 38 26">
+          <rect x="6" y="3" width="26" height="20" rx="2" fill="none" stroke="var(--tank)" stroke-width="1.5" />
+          <rect x="8" y="16" width="22" height="5" rx="1" fill="var(--tank)" opacity=".3" /><text x="19" y="13"
+            text-anchor="middle" fill="var(--tank)" font-size="7" font-family="monospace">T</text>
+        </svg>
+        <span class="ln" style="color:var(--tank)">Tank / Tanque</span>
+      </div>
+      <div class="li">
+        <svg class="ls" viewBox="0 0 38 26">
+          <circle cx="19" cy="13" r="11" fill="none" stroke="var(--pump)" stroke-width="1.5" />
+          <path d="M13,13 A6,6 0 1,1 19,19 L19,13 Z" fill="var(--pump)" opacity=".7" />
+          <line x1="8" y1="13" x2="30" y2="13" stroke="var(--pump)" stroke-width="1.5" />
+        </svg>
+        <span class="ln" style="color:var(--pump)">Bomba Centrífuga</span>
+      </div>
+      <div class="li">
+        <svg class="ls" viewBox="0 0 38 26">
+          <line x1="4" y1="13" x2="34" y2="13" stroke="var(--valve)" stroke-width="1.5" />
+          <polygon points="19,5 27,13 19,21 11,13" fill="none" stroke="var(--valve)" stroke-width="1.5" />
+          <line x1="19" y1="0" x2="19" y2="5" stroke="var(--valve)" stroke-width="1.5" />
+          <circle cx="19" cy="-1" r="2.5" fill="var(--valve)" />
+        </svg>
+        <span class="ln" style="color:var(--valve)">Válvula de Control</span>
+      </div>
+      <div class="li">
+        <svg class="ls" viewBox="0 0 38 26">
+          <rect x="4" y="7" width="30" height="12" rx="2" fill="none" stroke="var(--fixeddp)" stroke-width="1.5" /><text
+            x="19" y="17" text-anchor="middle" fill="var(--fixeddp)" font-size="8" font-family="monospace"
+            font-weight="600">ΔP</text>
+          <line x1="0" y1="13" x2="4" y2="13" stroke="var(--fixeddp)" stroke-width="1.5" />
+          <line x1="34" y1="13" x2="38" y2="13" stroke="var(--fixeddp)" stroke-width="1.5" />
+        </svg>
+        <span class="ln" style="color:var(--fixeddp)">Fixed ΔP Device</span>
+      </div>
+      <div class="li">
+        <svg class="ls" viewBox="0 0 38 26">
+          <circle cx="19" cy="13" r="11" fill="none" stroke="var(--boundary)" stroke-width="1.5" />
+          <circle cx="19" cy="13" r="6" fill="none" stroke="var(--boundary)" stroke-width="1" stroke-dasharray="2,2" />
+          <text x="19" y="17" text-anchor="middle" fill="var(--boundary)" font-size="7"
+            font-family="monospace">PB</text>
+        </svg>
+        <span class="ln" style="color:var(--boundary)">Pressure Boundary</span>
+      </div>
+      <div class="li">
+        <svg class="ls" viewBox="0 0 38 26">
+          <polygon points="19,3 31,13 19,23 7,13" fill="none" stroke="var(--node)" stroke-width="1.5" />
+        </svg>
+        <span class="ln" style="color:var(--node)">Nodo</span>
+      </div>
+      <div class="ld"></div>
+      <div class="li">
+        <svg class="ls" viewBox="0 0 38 26">
+          <line x1="2" y1="13" x2="36" y2="13" stroke="var(--pc)" stroke-width="3" />
+        </svg>
+        <span class="ln">Cañería (Pipe)</span>
+      </div>
+      <div class="ld"></div>
+      <div style="font-size:9px;color:var(--text-dim);line-height:1.7">
+        <div style="color:var(--ec);margin-bottom:3px">↕ Cota de elevación</div>
+        <div>Hover = detalles<br>Scroll = zoom · Drag = pan</div>
+      </div>
+    </aside>
+  </main>
+
+  <div id="uoverlay">
+    <div class="ubox">
+      <h2>📂 Cargar Excel</h2>
+      <p>Hojas requeridas:<br>
+        <strong style="color:var(--accent)">Nodos</strong> — Nodo, Elevación (m), Grid X, Grid Y<br>
+        <strong style="color:var(--accent)">Cañerías</strong> — Cañería, OD, WT, ID (mm), Longitud, Nodo Inicio, Nodo
+        Fin<br>
+        <strong style="color:var(--accent)">Componentes Especiales</strong> — Tipo, Nombre, Parámetro, Valor, Unidad
+      </p>
+      <label class="upick" for="finput">Seleccionar .xlsx</label>
+      <input type="file" id="finput" accept=".xlsx,.xls" onchange="loadExcel(this)">
+      <button class="ucan" onclick="closeUpload()">Cancelar</button>
+      <div id="ust"></div>
+    </div>
+  </div>
+  <div id="tooltip"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    // ── STATE ─────────────────────────────────────────────────────────────────────
+    let NODES = [], PIPES = [], COMPDATA = {}; // COMPDATA: {nodeName: {param:val,...}}
+    let mode = 'grid', scale = 1, ox = 0, oy = 0;
+    let dragging = false, dsx, dsy, dox, doy, lt = false;
+    const STEP = 85, MAR = 130, R = 13;
+    const NS = 'http://www.w3.org/2000/svg';
+
+    // ── DEFAULT DATA ──────────────────────────────────────────────────────────────
+    function loadDefaults() {
+      NODES = [
+        { name: "Centrifugal Pump 1", elev: 0.3, gx: -3, gy: 1, type: "pump" },
+        { name: "Control Valve 1", elev: 7.5, gx: 23, gy: 5, type: "valve" },
+        { name: "Fixed dP Device 1", elev: 4.724, gx: -3, gy: 4, type: "fixeddp" },
+        { name: "Node 1", elev: 4.724, gx: -1, gy: 4, type: "node" },
+        { name: "Node 11", elev: 6.8, gx: 2, gy: 5, type: "node" },
+        { name: "Node 12", elev: 6.8, gx: 4, gy: 4, type: "node" },
+        { name: "Node 14", elev: 7.8, gx: 6, gy: 5, type: "node" },
+        { name: "Node 16", elev: 3.42, gx: 8, gy: 4, type: "node" },
+        { name: "Node 18", elev: 6.3, gx: 10, gy: 5, type: "node" },
+        { name: "Node 19", elev: 11.49, gx: 12, gy: 6, type: "node" },
+        { name: "Node 2", elev: 4.7, gx: 2, gy: 4, type: "node" },
+        { name: "Node 20", elev: 11.49, gx: 14, gy: 6, type: "node" },
+        { name: "Node 21", elev: 9.7, gx: 14, gy: 5, type: "node" },
+        { name: "Node 22", elev: 9.7, gx: 17, gy: 5, type: "node" },
+        { name: "Node 23", elev: 8.7, gx: 17, gy: 4, type: "node" },
+        { name: "Node 24", elev: 9.21, gx: 19, gy: 5, type: "node" },
+        { name: "Node 25", elev: 9.21, gx: 21, gy: 5, type: "node" },
+        { name: "Node 26", elev: 6.7, gx: 21, gy: 4, type: "node" },
+        { name: "Node 27", elev: 6.7, gx: 23, gy: 4, type: "node" },
+        { name: "Node 29", elev: 7.5, gx: 25, gy: 5, type: "node" },
+        { name: "Node 3", elev: 6.8, gx: 4, gy: 5, type: "node" },
+        { name: "Node 4", elev: 3.0, gx: 6, gy: 4, type: "node" },
+        { name: "Node 5", elev: 7.8, gx: 8, gy: 5, type: "node" },
+        { name: "Node 6", elev: 3.42, gx: 10, gy: 4, type: "node" },
+        { name: "Node 7", elev: 6.3, gx: 12, gy: 5, type: "node" },
+        { name: "Pressure Boundary 1", elev: 6.0, gx: 25, gy: 4, type: "boundary" },
+        { name: "Tank 1", elev: 0.3, gx: -9, gy: 1, type: "tank" },
+      ];
+      PIPES = [
+        { name: "Pipe 1", from: "Tank 1", to: "Centrifugal Pump 1", len: 1.404, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 3", from: "Node 1", to: "Node 2", len: 88.56, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 11", from: "Centrifugal Pump 1", to: "Fixed dP Device 1", len: 12.744, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 12", from: "Fixed dP Device 1", to: "Node 1", len: 7.56, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 13", from: "Node 2", to: "Node 11", len: 2.268, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 4", from: "Node 11", to: "Node 3", len: 32.94, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 5", from: "Node 12", to: "Node 4", len: 97.308, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 14", from: "Node 3", to: "Node 12", len: 4.104, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 15", from: "Node 4", to: "Node 14", len: 5.184, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 6", from: "Node 14", to: "Node 5", len: 43.2, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 16", from: "Node 5", to: "Node 16", len: 4.73, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 7", from: "Node 16", to: "Node 6", len: 93.312, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 17", from: "Node 6", to: "Node 18", len: 3.1104, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 8", from: "Node 18", to: "Node 7", len: 9.4068, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 18", from: "Node 7", to: "Node 19", len: 5.25, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 19", from: "Node 19", to: "Node 20", len: 106.92, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 20", from: "Node 20", to: "Node 21", len: 1.8641, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 21", from: "Node 21", to: "Node 22", len: 23.76, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 22", from: "Node 22", to: "Node 23", len: 2.6136, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 23", from: "Node 23", to: "Node 24", len: 0.675, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 24", from: "Node 24", to: "Node 25", len: 64.8, od: 160, wt: 9.5, id: 141 },
+        { name: "Pipe 25", from: "Node 25", to: "Node 26", len: 2.7108, od: 168.28, wt: 3.4, id: 161.47 },
+        { name: "Pipe 26", from: "Node 26", to: "Node 27", len: 4.86, od: 168.28, wt: 3.4, id: 161.47 },
+        { name: "Pipe 27", from: "Node 27", to: "Control Valve 1", len: 0.864, od: 168.28, wt: 3.4, id: 161.47 },
+        { name: "Pipe 28", from: "Control Valve 1", to: "Node 29", len: 4.32, od: 168.28, wt: 3.4, id: 161.47 },
+        { name: "Pipe 29", from: "Node 29", to: "Pressure Boundary 1", len: 1.62, od: 168.28, wt: 3.4, id: 161.47 },
+      ];
+      // Component parameters for display next to symbol
+      COMPDATA = {
+        "Tank 1": { "Presión sup.": "94.5 kPa abs", "Nivel líquido": "0.6 m" },
+        "Centrifugal Pump 1": { "Modo": "flow", "Caudal": "96 m³/h" },
+        "Fixed dP Device 1": { "Caída ΔP": "0.29 bar" },
+        "Control Valve 1": { "Cv": "150" },
+        "Pressure Boundary 1": { "Presión": "94.5 kPa abs" },
+      };
+    }
+
+    // ── EXCEL LOADER ──────────────────────────────────────────────────────────────
+    function openUpload() { document.getElementById('uoverlay').classList.add('show'); document.getElementById('ust').textContent = ''; }
+    function closeUpload() { document.getElementById('uoverlay').classList.remove('show'); }
+
+    function detectType(name, sm) {
+      if (sm[name]) return sm[name];
+      const n = name.toLowerCase();
+      if (n.includes('pump') || n.includes('bomba')) return 'pump';
+      if (n.includes('control valve') || n.includes('válvula')) return 'valve';
+      if (n.includes('fixed') || n.includes('dp device')) return 'fixeddp';
+      if (n.includes('pressure boundary')) return 'boundary';
+      if (n.includes('tank') || n.includes('tanque')) return 'tank';
+      return 'node';
+    }
+
+    function loadExcel(inp) {
+      const f = inp.files[0]; if (!f) return;
+      const st = document.getElementById('ust');
+      st.className = ''; st.textContent = 'Leyendo…';
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const sm = {};
+
+          // ── Componentes Especiales ──
+          const csn = wb.SheetNames.find(s => s.toLowerCase().includes('component') || s.toLowerCase().includes('especial'));
+          COMPDATA = {};
+          if (csn) {
+            const crows = XLSX.utils.sheet_to_json(wb.Sheets[csn], { header: 1 });
+            // rows: Tipo | Nombre | Parámetro | Valor | Unidad
+            crows.forEach(r => {
+              const tp = String(r[0] || '').toLowerCase(), nm = String(r[1] || '').trim();
+              const param = String(r[2] || '').trim(), val = r[3], unit = String(r[4] || '').trim();
+              if (!nm || tp === 'tipo' || !param) return;
+              // type map
+              if (tp.includes('bomba') || tp.includes('pump')) sm[nm] = 'pump';
+              else if (tp.includes('válv') || tp.includes('valve')) sm[nm] = 'valve';
+              else if (tp.includes('fixed') || tp.includes('dp')) sm[nm] = 'fixeddp';
+              else if (tp.includes('boundary')) sm[nm] = 'boundary';
+              else if (tp.includes('tank') || tp.includes('tanque')) sm[nm] = 'tank';
+              // store param
+              if (!COMPDATA[nm]) COMPDATA[nm] = {};
+              const pl = param.toLowerCase();
+              if (pl.includes('modo') || pl.includes('mode') || pl.includes('operac'))
+                COMPDATA[nm]['Modo'] = String(val || '');
+              else if (pl.includes('caudal') || pl.includes('flow'))
+                COMPDATA[nm]['Caudal'] = `${val} ${unit}`;
+              else if (pl.includes('nivel'))
+                COMPDATA[nm]['Nivel líquido'] = `${val} ${unit}`;
+              else if ((pl.includes('presión') || pl.includes('presion')) && !pl.includes('caída'))
+                COMPDATA[nm]['Presión'] = `${val} ${unit}`;
+              else if (pl.includes('superficial') || pl.includes('superf'))
+                COMPDATA[nm]['Presión sup.'] = `${val} ${unit}`;
+              else if (pl.includes('caída') || pl.includes('caida') || pl.includes('drop'))
+                COMPDATA[nm]['Caída ΔP'] = `${val} ${unit}`;
+              else if (pl.includes('cv') || pl.includes('coef'))
+                COMPDATA[nm]['Cv'] = String(val || '');
+            });
+          }
+
+          // ── Nodos ──
+          const nsn = wb.SheetNames.find(s => s.toLowerCase().includes('nodo'));
+          if (!nsn) throw new Error('Hoja "Nodos" no encontrada');
+          const nrows = XLSX.utils.sheet_to_json(wb.Sheets[nsn], { header: 1 });
+          const nh = nrows[0].map(h => String(h || '').trim().toLowerCase());
+          const ni = nh.findIndex(h => h === 'nodo' || h.startsWith('nodo'));
+          const ei = nh.findIndex(h => h.includes('elev'));
+          const xi = nh.findIndex(h => h.includes('grid x') || h === 'x');
+          const yi = nh.findIndex(h => h.includes('grid y') || h === 'y');
+          if (ni < 0 || xi < 0 || yi < 0) throw new Error('Columnas de Nodos no encontradas (Nodo, Grid X, Grid Y)');
+          NODES = nrows.slice(1).filter(r => r[ni] && !String(r[ni]).toLowerCase().includes('total')).map(r => ({
+            name: String(r[ni]).trim(), elev: parseFloat(r[ei]) || 0,
+            gx: parseFloat(r[xi]) || 0, gy: parseFloat(r[yi]) || 0,
+            type: detectType(String(r[ni]).trim(), sm)
+          }));
+          if (!NODES.length) throw new Error('Sin nodos válidos');
+
+          // ── Cañerías ──
+          const psn = wb.SheetNames.find(s => { const l = s.toLowerCase(); return l.includes('ca') && (l.includes('er') || l.includes('\u00f1')); });
+          if (!psn) throw new Error('Hoja "Cañerías" no encontrada');
+          const prows = XLSX.utils.sheet_to_json(wb.Sheets[psn], { header: 1 });
+          const ph2 = prows[0].map(h => String(h || '').trim().toLowerCase());
+          const pni = ph2.findIndex(h => h.startsWith('ca'));
+          const odi = ph2.findIndex(h => h.startsWith('od'));
+          const wti = ph2.findIndex(h => h.startsWith('wt'));
+          const idi = ph2.findIndex(h => h === 'id (mm)' || h === 'id');
+          const li = ph2.findIndex(h => h.includes('long'));
+          const fi = ph2.findIndex(h => h.includes('nodo de inicio') || h.includes('inicio') || h.includes('from'));
+          const ti = ph2.findIndex(h => h.includes('nodo de fin') || h.includes('fin') || h.includes('to'));
+          if (pni < 0 || fi < 0 || ti < 0) throw new Error('Columnas de Cañerías no encontradas');
+          PIPES = prows.slice(1).filter(r => r[pni] && r[fi] && r[ti]).map(r => ({
+            name: String(r[pni]).trim(),
+            from: String(r[fi]).trim(), // Limpia espacios
+            to: String(r[ti]).trim(),   // Limpia espacios
+            len: parseFloat(r[li]) || 0,
+            od: odi >= 0 ? parseFloat(r[odi]) || null : null,
+            wt: wti >= 0 ? parseFloat(r[wti]) || null : null,
+            id: idi >= 0 ? parseFloat(r[idi]) || null : null
+          }));
+          if (!PIPES.length) throw new Error('Sin cañerías válidas');
+
+          st.textContent = `✓ ${NODES.length} nodos, ${PIPES.length} cañerías cargados`;
+          setTimeout(() => { closeUpload(); renderDiagram(); setTimeout(resetView, 50); }, 700);
+        } catch (err) { st.className = 'err'; st.textContent = '⚠ ' + err.message; }
+      };
+      reader.readAsArrayBuffer(f);
+    }
+
+    // ── HELPERS ───────────────────────────────────────────────────────────────────
+    function se(tag, a) { const el = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) el.setAttribute(k, v); return el; }
+    function byName(n) {
+      if (!n) return null;
+      // Trim quita espacios invisibles y toLowerCase ignora mayúsculas
+      return NODES.find(x => x.name.trim().toLowerCase() === String(n).trim().toLowerCase());
+    }
+    function CV(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+    // ── POSITIONS ─────────────────────────────────────────────────────────────────
+    function getPos() {
+      const pos = {};
+      if (mode === 'grid') {
+        const gxMn = Math.min(...NODES.map(n => n.gx));
+        const gyMx = Math.max(...NODES.map(n => n.gy));
+        NODES.forEach(n => { pos[n.name] = { x: MAR + (n.gx - gxMn) * STEP, y: MAR + (gyMx - n.gy) * STEP }; });
+      } else {
+        const sorted = [...NODES].sort((a, b) => a.gx - b.gx || a.gy - b.gy);
+        sorted.forEach((n, i) => { pos[n.name] = { x: MAR + i * 62, y: 200 }; });
+      }
+      return pos;
+    }
+
+    // ── LABEL PLACEMENT ───────────────────────────────────────────────────────────
+    // Returns 'above' or 'below' based on which directions pipes connect to a node.
+    function labelSide(nodeName, pos) {
+      // Collect directions of all connected pipes relative to this node
+      let hasLeft = false, hasRight = false, hasUp = false, hasDown = false;
+      const p = pos[nodeName];
+      PIPES.forEach(pipe => {
+        let other = null;
+        if (pipe.from === nodeName) other = pos[pipe.to];
+        else if (pipe.to === nodeName) other = pos[pipe.from];
+        if (!other) return;
+        const dx = other.x - p.x, dy = other.y - p.y;
+        const th = 20; // threshold pixels to consider horizontal vs vertical
+        if (Math.abs(dx) > th) {
+          if (dx < 0) hasLeft = true; else hasRight = true;
+        }
+        if (Math.abs(dy) > th) {
+          if (dy < 0) hasUp = true; else hasDown = true;
+        }
+      });
+
+      // Apply rules:
+      // Left+Up  → below
+      if (hasLeft && hasUp && !hasRight && !hasDown) return 'below';
+      // Down+Right → above
+      if (hasDown && hasRight && !hasLeft && !hasUp) return 'above';
+      // Left+Right → below
+      if (hasLeft && hasRight && !hasUp && !hasDown) return 'below';
+      // Left+Down → above
+      if (hasLeft && hasDown && !hasRight && !hasUp) return 'above';
+      // Up only → below
+      if (hasUp && !hasDown && !hasLeft && !hasRight) return 'below';
+      // Down only → above
+      if (hasDown && !hasUp && !hasLeft && !hasRight) return 'above';
+      // Default → below
+      return 'below';
+    }
+
+    // ── SYMBOL EXTRA HEIGHT (for offset calc) ─────────────────────────────────────
+    function symbolRadius(type) {
+      if (type === 'valve') return R + 13;   // valve has actuator on top
+      if (type === 'tank') return R * 1.1;
+      if (type === 'fixeddp') return R * 0.75;
+      return R;
+    }
+
+    // ── NODE SYMBOLS ──────────────────────────────────────────────────────────────
+    function mkSymbol(node, cx, cy) {
+      const cv = { pump: 'var(--pump)', valve: 'var(--valve)', fixeddp: 'var(--fixeddp)', boundary: 'var(--boundary)', tank: 'var(--tank)', node: 'var(--node)' }[node.type] || 'var(--node)';
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('data-node', node.name); g.style.cursor = 'pointer';
+
+      if (node.type === 'tank') {
+        g.appendChild(se('rect', { x: cx - R, y: cy - R * 1.1, width: R * 2, height: R * 2.2, rx: 3, fill: 'var(--bg)', stroke: cv, 'stroke-width': 1.5 }));
+        g.appendChild(se('rect', { x: cx - R + 2, y: cy + R * .1, width: (R - 2) * 2, height: R * .8, rx: 1, fill: cv, opacity: .3 }));
+        const t = se('text', { x: cx, y: cy + R * .35, 'text-anchor': 'middle', fill: cv, 'font-size': 9, 'font-family': 'monospace' });
+        t.textContent = 'T'; g.appendChild(t);
+      } else if (node.type === 'pump') {
+        g.appendChild(se('circle', { cx, cy, r: R, fill: 'var(--bg)', stroke: cv, 'stroke-width': 1.5 }));
+        g.appendChild(se('path', { d: `M${cx - R * .4},${cy} A${R * .6},${R * .6} 0 1,1 ${cx},${cy + R * .5} L${cx},${cy} Z`, fill: cv, opacity: .75 }));
+        g.appendChild(se('line', { x1: cx - R, y1: cy, x2: cx + R, y2: cy, stroke: cv, 'stroke-width': 1.5 }));
+      } else if (node.type === 'valve') {
+        g.appendChild(se('polygon', { points: `${cx},${cy - R} ${cx + R},${cy} ${cx},${cy + R} ${cx - R},${cy}`, fill: 'var(--bg)', stroke: cv, 'stroke-width': 1.5 }));
+        g.appendChild(se('line', { x1: cx, y1: cy - R, x2: cx, y2: cy - R - 10, stroke: cv, 'stroke-width': 1.5 }));
+        g.appendChild(se('circle', { cx, cy: cy - R - 13, r: 3.5, fill: cv }));
+      } else if (node.type === 'fixeddp') {
+        g.appendChild(se('rect', { x: cx - R * 1.3, y: cy - R * .75, width: R * 2.6, height: R * 1.5, rx: 3, fill: 'var(--bg)', stroke: cv, 'stroke-width': 1.5 }));
+        const t = se('text', { x: cx, y: cy + R * .35, 'text-anchor': 'middle', fill: cv, 'font-size': 9, 'font-family': 'monospace', 'font-weight': 600 });
+        t.textContent = 'ΔP'; g.appendChild(t);
+      } else if (node.type === 'boundary') {
+        g.appendChild(se('circle', { cx, cy, r: R, fill: 'var(--bg)', stroke: cv, 'stroke-width': 1.5 }));
+        g.appendChild(se('circle', { cx, cy, r: R * .55, fill: 'none', stroke: cv, 'stroke-width': 1, 'stroke-dasharray': '2,2' }));
+        const t = se('text', { x: cx, y: cy + R * .35, 'text-anchor': 'middle', fill: cv, 'font-size': 7, 'font-family': 'monospace' });
+        t.textContent = 'PB'; g.appendChild(t);
+      } else {
+        g.appendChild(se('polygon', { points: `${cx},${cy - R} ${cx + R * 1.25},${cy} ${cx},${cy + R} ${cx - R * 1.25},${cy}`, fill: 'var(--bg)', stroke: cv, 'stroke-width': 1.5 }));
+      }
+      g.appendChild(se('circle', { cx, cy, r: R + 6, fill: 'transparent' }));
+      return g;
+    }
+
+    // Draw multi-line text block below or above a node
+    function mkTextBlock(lines, cx, anchorY, side, color, svg) {
+      // side: 'above' = lines go upward from anchorY, 'below' = lines go down
+      const lh = 11;
+      lines.forEach((line, i) => {
+        const y = side === 'below' ? anchorY + (i + 1) * lh : anchorY - (lines.length - i - 1) * lh;
+        const t = se('text', { x: cx, y, 'text-anchor': 'middle', fill: color, 'font-family': 'JetBrains Mono,monospace', 'font-size': 8, 'pointer-events': 'none' });
+        t.textContent = line; svg.appendChild(t);
+      });
+    }
+
+    // ── RENDER ────────────────────────────────────────────────────────────────────
+    function renderDiagram() {
+      const svg = document.getElementById('svg');
+      svg.innerHTML = '';
+      if (!NODES.length) return;
+
+      const showNodeNames = document.getElementById('cb-nodes').checked;
+      const showPipeNames = document.getElementById('cb-pipes').checked;
+      const showElev = document.getElementById('cb-elev').checked;
+
+      const pos = getPos();
+      const allX = Object.values(pos).map(p => p.x);
+      const allY = Object.values(pos).map(p => p.y);
+      const maxX = Math.max(...allX), maxY = Math.max(...allY);
+      const svgW = maxX + MAR + 80;
+      const svgH = maxY + MAR + (showElev ? 140 : 70);
+      svg.setAttribute('width', svgW); svg.setAttribute('height', svgH);
+
+      // ── defs ──
+      const defs = se('defs', {});
+      const EC = lt ? '#c04810' : '#ff6b2b';
+      const mkM = (id, flip) => {
+        const m = se('marker', { id, 'markerWidth': 7, 'markerHeight': 7, 'refX': flip ? 1 : 6, 'refY': 3.5, 'orient': flip ? 'auto-start-reverse' : 'auto' });
+        m.appendChild(se('path', { d: 'M1,1 L6,3.5 L1,6 Z', fill: EC }));
+        return m;
+      };
+      defs.appendChild(mkM('aup', false)); defs.appendChild(mkM('adn', true));
+      svg.appendChild(defs);
+
+      // ── bg ──
+      svg.appendChild(se('rect', { x: 0, y: 0, width: svgW, height: svgH, fill: lt ? '#f0f4f8' : '#0a0e14' }));
+
+      // ── Grid lines ──
+      if (mode === 'grid') {
+        const gxMn = Math.min(...NODES.map(n => n.gx)), gxMx = Math.max(...NODES.map(n => n.gx));
+        const gyMn = Math.min(...NODES.map(n => n.gy)), gyMx = Math.max(...NODES.map(n => n.gy));
+        const gc = lt ? '#a0b8cc' : '#1e2d40';
+        for (let gx = gxMn; gx <= gxMx; gx++) {
+          const x = MAR + (gx - gxMn) * STEP;
+          svg.appendChild(se('line', { x1: x, y1: MAR * .4, x2: x, y2: maxY + MAR * .6, stroke: gc, 'stroke-width': .5 }));
+        }
+        for (let gy = gyMn; gy <= gyMx; gy++) {
+          const y = MAR + (gyMx - gy) * STEP;
+          svg.appendChild(se('line', { x1: MAR * .4, y1: y, x2: maxX + MAR * .6, y2: y, stroke: gc, 'stroke-width': .5 }));
+        }
+      }
+
+      // ── Elevation arrows ──
+      // Each arrow goes from baselineY up to the NODE's actual Y position in the diagram
+      if (showElev) {
+        const baseY = maxY + MAR * 1.4;
+
+        // Group overlapping X positions
+        const xMap = {};
+        NODES.forEach(n => { const k = Math.round(pos[n.name].x / 4) * 4; (xMap[k] = xMap[k] || []).push(n); });
+
+        NODES.forEach(n => {
+          const px = pos[n.name].x, py = pos[n.name].y;
+          const k = Math.round(px / 4) * 4;
+          const grp = xMap[k]; const gi = grp.indexOf(n);
+          const ex = px + 22 + gi * 22; // horizontal spread for overlapping nodes
+
+          // Arrow from baselineY up to the node's Y position in the diagram
+          const topY = py + 5; // arrow tip at the node's actual Y
+
+          svg.appendChild(se('line', {
+            x1: ex, y1: topY + 4, x2: ex, y2: baseY,
+            stroke: EC, 'stroke-width': 1.5, 'marker-end': 'url(#aup)', 'marker-start': 'url(#adn)', opacity: .8
+          }));
+          // Baseline tick
+          svg.appendChild(se('line', { x1: ex - 4, y1: baseY, x2: ex + 4, y2: baseY, stroke: EC, 'stroke-width': 1.5, opacity: .5 }));
+          // Label rotated along the arrow
+          const midY = topY + (baseY - topY) / 2;
+          const lbl = se('text', { x: ex + 5, y: midY + 3, fill: EC, 'font-family': 'monospace', 'font-size': 7.5, 'text-anchor': 'start', opacity: .9, transform: `rotate(-90,${ex + 5},${midY})` });
+          lbl.textContent = `${n.elev}m`;
+          svg.appendChild(lbl);
+          // Dashed horizontal connector from node to the arrow
+          svg.appendChild(se('line', { x1: px + 18, y1: py, x2: ex, y2: py, stroke: EC, 'stroke-width': .7, 'stroke-dasharray': '3,2', opacity: .3 }));
+          // Wide hit area
+          const hit = se('rect', { x: ex - 8, y: topY, width: 22, height: baseY - topY, fill: 'transparent', cursor: 'default' });
+          hit.addEventListener('mouseenter', e => showTTelev(e, n));
+          hit.addEventListener('mouseleave', hideTT);
+          hit.addEventListener('mousemove', e => posTT(e));
+          svg.appendChild(hit);
+        });
+
+        // Reference line
+        svg.appendChild(se('line', { x1: MAR * .3, y1: baseY, x2: maxX + MAR * .5, y2: baseY, stroke: EC, 'stroke-width': .8, 'stroke-dasharray': '4,4', opacity: .25 }));
+        const rl = se('text', { x: MAR * .35, y: baseY + 4, fill: EC, 'font-family': 'monospace', 'font-size': 7.5, 'text-anchor': 'middle', opacity: .55 });
+        rl.textContent = 'ref 0'; svg.appendChild(rl);
+      }
+
+      // ── Pipes ──
+      const PC = lt ? '#2a6090' : '#2a5a8a';
+      const PH = lt ? '#0078a8' : '#00c8ff';
+      const PL = lt ? '#3a6a8a' : '#4a7a9a';
+
+      PIPES.forEach(pipe => {
+        const fn = byName(pipe.from), tn = byName(pipe.to);
+        if (!fn || !tn) return;
+        const fp = pos[pipe.from], tp = pos[pipe.to];
+        if (!fp || !tp) return;
+        const dx = tp.x - fp.x, dy = tp.y - fp.y;
+        const plen = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        const isVert = Math.abs(dx) < 5;
+
+        const pl = se('line', { x1: fp.x, y1: fp.y, x2: tp.x, y2: tp.y, stroke: PC, 'stroke-width': 3, 'pointer-events': 'none' });
+        const ph = se('line', { x1: fp.x, y1: fp.y, x2: tp.x, y2: tp.y, stroke: 'transparent', 'stroke-width': 14, cursor: 'pointer' });
+        ph.addEventListener('mouseenter', e => { pl.setAttribute('stroke', PH); pl.setAttribute('stroke-width', 4.5); showTTpipe(e, pipe); });
+        ph.addEventListener('mouseleave', () => { pl.setAttribute('stroke', PC); pl.setAttribute('stroke-width', 3); hideTT(); });
+        ph.addEventListener('mousemove', e => posTT(e));
+        svg.appendChild(pl); svg.appendChild(ph);
+
+        if (showPipeNames) {
+          const mx = (fp.x + tp.x) / 2, my = (fp.y + tp.y) / 2;
+          let lx = mx, ly = my, rot = 0;
+          if (isVert) {
+            lx = mx + 15; ly = my; rot = -90;
+          } else {
+            // perpendicular offset: push label away from the line
+            const nx = -dy / plen, ny = dx / plen;
+            lx = mx + nx * 13; ly = my + ny * 13;
+            rot = (angle > 90 || angle < -90) ? angle + 180 : angle;
+          }
+          const t = se('text', { x: lx, y: ly, fill: PL, 'font-family': 'monospace', 'font-size': 8, 'text-anchor': 'middle', 'pointer-events': 'none', transform: `rotate(${rot},${lx},${ly})` });
+          t.textContent = pipe.name; svg.appendChild(t);
+        }
+      });
+
+      // ── Nodes + Labels ──
+      const TC = lt ? '#1a2a3a' : '#c8d8e8';
+      const DIM = lt ? '#4a7a9a' : '#5a8aaa';
+
+      NODES.forEach(node => {
+        const p = pos[node.name]; if (!p) return;
+        const g = mkSymbol(node, p.x, p.y);
+        g.addEventListener('mouseenter', e => showTTnode(e, node));
+        g.addEventListener('mouseleave', hideTT);
+        g.addEventListener('mousemove', e => posTT(e));
+        svg.appendChild(g);
+
+        if (!showNodeNames) return;
+
+        const sr = symbolRadius(node.type);
+        const side = labelSide(node.name, pos);
+        const gap = 6; // extra spacing from symbol edge
+
+        // Short name line
+        const shortName = node.name
+          .replace('Centrifugal ', 'CP ')
+          .replace('Fixed dP Device', 'ΔP Dev.')
+          .replace('Pressure Boundary', 'PB')
+          .replace('Control Valve', 'CV');
+
+        // Build lines: [name, ...param lines]
+        const lines = [shortName];
+        const cd = COMPDATA[node.name];
+        if (cd) {
+          if (node.type === 'pump') {
+            if (cd['Modo']) lines.push(`modo: ${cd['Modo']}`);
+            if (cd['Caudal']) lines.push(`Q: ${cd['Caudal']}`);
+          } else if (node.type === 'valve') {
+            if (cd['Cv']) lines.push(`Cv: ${cd['Cv']}`);
+          } else if (node.type === 'boundary') {
+            if (cd['Presión']) lines.push(`P: ${cd['Presión']}`);
+          } else if (node.type === 'tank') {
+            if (cd['Presión sup.']) lines.push(`Psup: ${cd['Presión sup.']}`);
+            if (cd['Nivel líquido']) lines.push(`h: ${cd['Nivel líquido']}`);
+          } else if (node.type === 'fixeddp') {
+            if (cd['Caída ΔP']) lines.push(`ΔP: ${cd['Caída ΔP']}`);
+          }
+        }
+
+        const lh = 11;
+        // For 'above': anchor is top of symbol, lines flow upward
+        // For 'below': anchor is bottom of symbol, lines flow downward
+        if (side === 'below') {
+          const anchorY = p.y + sr + gap;
+          lines.forEach((line, i) => {
+            const y = anchorY + (i + 1) * lh;
+            const t = se('text', {
+              x: p.x, y, 'text-anchor': 'middle', fill: i === 0 ? TC : DIM,
+              'font-family': 'JetBrains Mono,monospace', 'font-size': i === 0 ? 8.5 : 7.5, 'pointer-events': 'none'
+            });
+            t.textContent = line; svg.appendChild(t);
+          });
+        } else {
+          // above: name closest to symbol, params above name
+          const anchorY = p.y - sr - gap;
+          const rev = [...lines].reverse();
+          rev.forEach((line, i) => {
+            const y = anchorY - (rev.length - i - 1) * lh;
+            const origIdx = lines.length - 1 - i;
+            const t = se('text', {
+              x: p.x, y, 'text-anchor': 'middle', fill: origIdx === 0 ? TC : DIM,
+              'font-family': 'JetBrains Mono,monospace', 'font-size': origIdx === 0 ? 8.5 : 7.5, 'pointer-events': 'none'
+            });
+            t.textContent = line; svg.appendChild(t);
+          });
+        }
+      });
+
+      updTx();
+    }
+
+    // ── TOOLTIPS ──────────────────────────────────────────────────────────────────
+    function showTTnode(e, n) {
+      const lbl = { pump: 'Bomba Centrífuga', valve: 'Válvula de Control', fixeddp: 'Fixed ΔP Device', boundary: 'Pressure Boundary', tank: 'Tanque', node: 'Nodo' };
+      const cd = COMPDATA[n.name] || {};
+      let extra = '';
+      if (n.type === 'pump') {
+        if (cd['Modo']) extra += `<div><span class="tr">Modo: </span><span class="tv">${cd['Modo']}</span></div>`;
+        if (cd['Caudal']) extra += `<div><span class="tr">Caudal: </span><span class="tv">${cd['Caudal']}</span></div>`;
+      } else if (n.type === 'valve') {
+        if (cd['Cv']) extra += `<div><span class="tr">Coef. Cv: </span><span class="tv">${cd['Cv']}</span></div>`;
+      } else if (n.type === 'boundary') {
+        if (cd['Presión']) extra += `<div><span class="tr">Presión: </span><span class="tv">${cd['Presión']}</span></div>`;
+      } else if (n.type === 'tank') {
+        if (cd['Presión sup.']) extra += `<div><span class="tr">Presión sup.: </span><span class="tv">${cd['Presión sup.']}</span></div>`;
+        if (cd['Nivel líquido']) extra += `<div><span class="tr">Nivel líquido: </span><span class="tv">${cd['Nivel líquido']}</span></div>`;
+      } else if (n.type === 'fixeddp') {
+        if (cd['Caída ΔP']) extra += `<div><span class="tr">Caída ΔP: </span><span class="tv">${cd['Caída ΔP']}</span></div>`;
+      }
+      showTT(e, `<strong>${n.name}</strong>
+    <div><span class="tr">Tipo: </span><span class="tv">${lbl[n.type]}</span></div>
+    <div><span class="tr">Elevación: </span><span class="tv">${n.elev} m</span></div>
+    <div><span class="tr">Grid: </span><span class="tv">X=${n.gx}, Y=${n.gy}</span></div>${extra}`);
+    }
+    function showTTpipe(e, p) {
+      const od = p.od != null ? `${p.od} mm` : '—', id = p.id != null ? `${p.id} mm` : '—', wt = p.wt != null ? `${p.wt} mm` : '—';
+      showTT(e, `<strong>${p.name}</strong>
+    <div><span class="tr">Desde: </span><span class="tv">${p.from}</span></div>
+    <div><span class="tr">Hasta: </span><span class="tv">${p.to}</span></div>
+    <div><span class="tr">Longitud: </span><span class="tv">${p.len} m</span></div>
+    <div><span class="tr">Ø ext. (OD): </span><span class="tv">${od}</span></div>
+    <div><span class="tr">Ø int. (ID): </span><span class="tv">${id}</span></div>
+    <div><span class="tr">Espesor (WT): </span><span class="tv">${wt}</span></div>`);
+    }
+    function showTTelev(e, n) {
+      showTT(e, `<strong>Elevación → ${n.name}</strong>
+    <div><span class="tr">Cota: </span><span class="tv">${n.elev} m</span></div>
+    <div><span class="tr">Pos. grid: </span><span class="tv">Y = ${n.gy}</span></div>`);
+    }
+    function showTT(e, html) { const tt = document.getElementById('tooltip'); tt.innerHTML = html; posTT(e); tt.classList.add('vis'); }
+    function hideTT() { document.getElementById('tooltip').classList.remove('vis'); }
+    function posTT(e) {
+      const tt = document.getElementById('tooltip');
+      let x = e.clientX + 15, y = e.clientY - 12;
+      if (x + 310 > window.innerWidth) x = e.clientX - 315;
+      if (y + 200 > window.innerHeight) y = e.clientY - 205;
+      tt.style.left = x + 'px'; tt.style.top = y + 'px';
+    }
+
+    // ── ZOOM & PAN ────────────────────────────────────────────────────────────────
+    function updTx() {
+      document.getElementById('svg').style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
+      document.getElementById('zlbl').textContent = Math.round(scale * 100) + '%';
+    }
+    function zoom(d, mx, my) {
+      const c = document.getElementById('cc');
+      if (mx === undefined) mx = c.clientWidth / 2;
+      if (my === undefined) my = c.clientHeight / 2;
+      const p = scale; scale = Math.max(.1, Math.min(6, scale + d));
+      ox = mx - (mx - ox) * (scale / p); oy = my - (my - oy) * (scale / p); updTx();
+    }
+    function resetView() {
+      const c = document.getElementById('cc'), s = document.getElementById('svg');
+      const sw = parseFloat(s.getAttribute('width')) || 1200, sh = parseFloat(s.getAttribute('height')) || 600;
+      scale = Math.min((c.clientWidth - 30) / sw, (c.clientHeight - 30) / sh, 1.3);
+      ox = (c.clientWidth - sw * scale) / 2; oy = (c.clientHeight - sh * scale) / 2; updTx();
+    }
+    document.getElementById('cc').addEventListener('wheel', e => {
+      e.preventDefault();
+      const r = document.getElementById('cc').getBoundingClientRect();
+      zoom(e.deltaY > 0 ? -.1 : .1, e.clientX - r.left, e.clientY - r.top);
+    }, { passive: false });
+    const cc = document.getElementById('cc');
+    cc.addEventListener('mousedown', e => {
+      if (e.target.closest('[data-node]')) return;
+      dragging = true; dsx = e.clientX; dsy = e.clientY; dox = ox; doy = oy;
+    });
+    window.addEventListener('mousemove', e => { if (!dragging) return; ox = dox + (e.clientX - dsx); oy = doy + (e.clientY - dsy); updTx(); });
+    window.addEventListener('mouseup', () => { dragging = false; });
+
+    // ── THEME ─────────────────────────────────────────────────────────────────────
+    function toggleTheme() {
+      lt = !lt;
+      document.body.classList.toggle('light', lt);
+      document.getElementById('btnTheme').textContent = lt ? '🌙 Fondo oscuro' : '☀️ Fondo claro';
+      renderDiagram();
+    }
+
+    // ── MODE ──────────────────────────────────────────────────────────────────────
+    function setMode(m) {
+      mode = m;
+      document.getElementById('btn-grid').classList.toggle('active', m === 'grid');
+      document.getElementById('btn-flat').classList.toggle('active', m === 'flat');
+      renderDiagram(); setTimeout(resetView, 50);
+    }
+
+    // ── SAVE PNG ──────────────────────────────────────────────────────────────────
+    function savePNG() {
+      const svg = document.getElementById('svg');
+      const w = parseFloat(svg.getAttribute('width')), h = parseFloat(svg.getAttribute('height'));
+      const blob = new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas'); c.width = w * 2; c.height = h * 2;
+        const ctx = c.getContext('2d'); ctx.scale(2, 2); ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        const a = document.createElement('a'); a.download = 'diagrama_cañerias.png'; a.href = c.toDataURL('image/png'); a.click();
+      };
+      img.onerror = () => { const a = document.createElement('a'); a.download = 'diagrama_cañerias.svg'; a.href = url; a.click(); };
+      img.src = url;
+    }
+
+    // ── INIT ──────────────────────────────────────────────────────────────────────
+    loadDefaults();
+    window.addEventListener('load', () => { renderDiagram(); setTimeout(resetView, 60); });
+    window.addEventListener('resize', () => { renderDiagram(); setTimeout(resetView, 60); });
+  </script>
+</body>
+
+</html>

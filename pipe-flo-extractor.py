@@ -29,14 +29,15 @@ import re, os, sys, csv, json, math
 # Completa este dict con los valores que PipeFlo reporta en sus resultados.
 # ─────────────────────────────────────────────────────────────────────────────
 USER_K_OVERRIDES: dict = {
-    # Valores calculados por PipeFlo (provistos por el usuario).
-    # Agrega o modifica las entradas según los resultados del solver.
-    'Pipe 1' : 1.028,
-    'Pipe 3' : 2.278,
-    'Pipe 4' : 1.822,
-    'Pipe 13': 0.0,
-    'Pipe 17': 0.0,
-    'Pipe 28': 3.286,
+    # Valores K calculados por PipeFlo (provistos por el usuario).
+    # El solver hidráulico los calcula con el caudal real de la red.
+    # Agrega aquí cualquier pipe adicional que PipeFlo reporte.
+    'Pipe 1' : 1.028,   # Ball + Reducer contraction 100mm
+    'Pipe 3' : 2.278,   # 2×Mitre 90° + 2×Mitre 45°
+    'Pipe 4' : 1.822,   # 2×Mitre 90°
+    'Pipe 13': 0.0,     # Sin singularidades
+    'Pipe 17': 0.0,     # Sin singularidades
+    'Pipe 28': 3.286,   # Ball + Butterfly + 2×Reducer 110mm
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -135,7 +136,7 @@ def extract_node_elevations(clean: str) -> dict:
         ('Control Valve 1',     r'Control Valve \d+ 154\s*\n\d+ 73 1 1 0 0 1 ([\d.e+\-]+) 6 meters'),
         ('Pressure Boundary 1', r'Pressure Boundary \d+ 154\s*\n\d+ 73 1 1 0 0 1 ([\d.e+\-]+) 6 meters'),
         ('Centrifugal Pump 1',  r'Centrifugal Pump \d+ 0 0 154\s*\n\d+ 73 1 1 0 0 1 ([\d.e+\-]+) 6 meters'),
-        ('Tank 1',              r'Tank \d+ 0 0 154\s*\n\d+ 73 1 0 0 1 0 0 0 0 0 0 1 ([\d.e+\-]+)'),
+        ('Tank 1',              r'Tank \d+ 0 0 154.*?\n\d+ 73 1 0 0 1 0 0 0 0 0 0 1 ([\d.e+\-]+)'),
     ]:
         m = re.search(pat, clean, re.DOTALL)
         if m: elev[name] = round(float(m.group(1)),4)
@@ -217,27 +218,114 @@ def _nearest_node(pos, coord_map, exclude=None):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def extract_fittings_for_pipe(name_line: int, next_pipe_line, lines: dict) -> list:
+    """
+    Extrae todos los fittings instalados en una cañería.
+    Soporta fittings en texto, referencias por objeto, reductores y figuras de dibujo.
+    """
+    # Tabla de objetos referenciados → tipo de fitting (analizado del archivo)
+    OBJ_FITTING = {
+        '212': {'category':'Bend','name':'Mitre Bend @ 90°','k_value':60.0,'k_type':'LeD'},
+        '562': {'category':'Bend','name':'Mitre Bend @ 90°','k_value':60.0,'k_type':'LeD'},
+        '566': {'category':'Bend','name':'Mitre Bend @ 45°','k_value':15.0,'k_type':'LeD'},
+        '710': {'category':'Bend','name':'Mitre Bend @ 60°','k_value':25.0,'k_type':'LeD'},
+        '728': {'category':'Bend','name':'Mitre Bend @ 90°','k_value':60.0,'k_type':'LeD'},
+    }
+
     slns     = sorted(lines.keys())
     fittings = []
-    fit_re   = re.compile(
-        r'^(\d+) (Valve|Bend|Check Valve|Fitting|Other) '
-        r'\d+ (.+?) \d+ ([\d.]+e[+\-]\d+|\d+\.\d+)')
+
+    # Patrón 1: Reducer con diámetro (e.g. "7 Fitting 21 Reducer - Contraction 3 1 100.0 2 mm")
+    red_re = re.compile(
+        r'^(?:\d+ )?(Fitting) \d+ (Reducer - (?:Contraction|Enlargement)) '
+        r'\d+ 1 ([\d.e+\-]+) \d+ mm'
+    )
+    # Patrón 2: Valve/Bend/CheckValve con Le/D o K directo
+    led_re = re.compile(
+        r'^(?:\d+ )?(Valve|Bend|Check Valve|Fitting|Other) \d+ (.+?) '
+        r'\d+ ([\d.]+e[+\-]\d+|\d+\.\d+)'
+    )
+    # Patrón 3: Ball valve por referencia de clase reduced_seat (class 124)
+    # "1 0  124 OBJ_ID 0 mm ..." or "1 0  124 OBJ_ID D1 mm D2 mm"
+    ball_ref_re = re.compile(r'^1 0\s+124 \d+')
+    # Patrón 4: Referencia a objeto fitting (1 0  109 OBJ_ID ...)
+    obj_ref_re = re.compile(r'^1 0\s+109 (\d+) \d+')
+    # Patrón 5: Reducer geométrico referenciado (118=Contraction, 119=Enlargement)
+    geom_re = re.compile(r'^1 0\s+(118|119) \d+ 1 ([\d.e+\-]+) \d+ mm')
+    # Patrón 6: Butterfly valve por referencia de clase (line with "ButterflyBlack")
+    # detectada via drawing shapes
+    butterfly_shape_re = re.compile(r'^\d+ \d+ 1ButterflyBlack ')
+
     for ln in slns:
         if ln <= name_line: continue
         if next_pipe_line and ln >= next_pipe_line: break
-        m = fit_re.match(lines[ln])
-        if not m: continue
-        try:    raw = float(m.group(4))
-        except: continue
-        cat  = m.group(2)
-        name = m.group(3).strip()
-        if any(x in name for x in ('Reducer','Contraction','Enlargement')):
-            fittings.append({'category':cat,'name':name,'k_value':None,'k_type':'geometry'})
+        content = lines[ln]
+
+        # P1: Reducer con diámetro en texto
+        m = red_re.match(content)
+        if m:
+            try:
+                diam = round(float(m.group(3)), 0)
+                fittings.append({'category':'Fitting',
+                                 'name': f"{m.group(2).strip()} ({diam:.0f} mm)",
+                                 'k_value': None, 'k_type': 'geometry'})
+            except: pass
             continue
-        k_type = 'K' if (cat=='Fitting' and any(x in name for x in ('Exit','Entrance','Conditioner'))) else 'LeD'
-        fittings.append({'category':cat,'name':name,
-                         'k_value':round(raw,4) if k_type=='K' else round(raw,2),'k_type':k_type})
+
+        # P2: Le/D o K directo (excluyendo reducers ya capturados)
+        m = led_re.match(content)
+        if m:
+            cat  = m.group(1)
+            name = m.group(2).strip()
+            if any(x in name for x in ('Reducer','Contraction','Enlargement')):
+                # Reducer sin diámetro claro → agregar genérico
+                fittings.append({'category':'Fitting','name':name,
+                                 'k_value':None,'k_type':'geometry'})
+            else:
+                try:
+                    raw = float(m.group(3))
+                    k_type = 'K' if (cat=='Fitting' and
+                                     any(x in name for x in ('Exit','Entrance'))) else 'LeD'
+                    fittings.append({'category':cat,'name':name,
+                                     'k_value':round(raw,4) if k_type=='K' else round(raw,2),
+                                     'k_type':k_type})
+                except: pass
+            continue
+
+        # P3: Ball valve por clase 124 (reduced_seat / full bore)
+        if ball_ref_re.match(content):
+            fittings.append({'category':'Valve','name':'Ball',
+                             'k_value':3.0,'k_type':'LeD'})
+            continue
+
+        # P4: Referencia a objeto fitting
+        m = obj_ref_re.match(content)
+        if m:
+            obj_id = m.group(1)
+            if obj_id in OBJ_FITTING:
+                fittings.append(dict(OBJ_FITTING[obj_id]))
+            continue
+
+        # P5: Reducer geométrico referenciado
+        m = geom_re.match(content)
+        if m:
+            try:
+                diam   = round(float(m.group(2)), 0)
+                rtype  = 'Reducer - Contraction' if m.group(1)=='118' else 'Reducer - Enlargement'
+                fittings.append({'category':'Fitting',
+                                 'name': f"{rtype} ({diam:.0f} mm)",
+                                 'k_value': None, 'k_type': 'geometry'})
+            except: pass
+            continue
+
+        # P6: Butterfly valve desde figura de dibujo
+        if butterfly_shape_re.match(content):
+            fittings.append({'category':'Valve','name':'Butterfly',
+                             'k_value':45.0,'k_type':'LeD'})
+            # Don't continue - let other patterns run on this line too? No, it's a shape line.
+            continue
+
     return fittings
+
 
 def _f_turb(roughness_mm: float, id_mm: float) -> float:
     if id_mm <= 0: return 0.0112
